@@ -1,0 +1,11 @@
+FA = (Q, A, d, q0, F)
+Q = {q0, q1, q2, q3, q4}
+A = {a, b}
+F = {q3}
+d(q0, a) = q1
+d(q1, b) = q2
+d(q2, b) = q0
+d(q3, a) = q4
+d(q4, a) = q0
+d(q2, a) = q3
+d(q1, b) = q1
