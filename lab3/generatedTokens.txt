@@ -1,0 +1,96 @@
+TokenType.PROCEED
+TokenType.FUNCTION
+TokenType.IDENTIFIER: (powerOfPower)
+TokenType.OPEN_PARENTHESIS
+TokenType.VAR
+TokenType.IDENTIFIER: (base)
+TokenType.COMMA
+TokenType.VAR
+TokenType.IDENTIFIER: (power1)
+TokenType.COMMA
+TokenType.VAR
+TokenType.IDENTIFIER: (power2)
+TokenType.CLOSE_PARENTHESIS
+TokenType.OPEN_BRACE
+TokenType.RETURN
+TokenType.POW
+TokenType.OPEN_PARENTHESIS
+TokenType.POW
+TokenType.OPEN_PARENTHESIS
+TokenType.IDENTIFIER: (base)
+TokenType.COMMA
+TokenType.IDENTIFIER: (power1)
+TokenType.CLOSE_PARENTHESIS
+TokenType.COMMA
+TokenType.IDENTIFIER: (power2)
+TokenType.CLOSE_PARENTHESIS
+TokenType.SEMICOLON
+TokenType.CLOSE_BRACE
+TokenType.FUNCTION
+TokenType.IDENTIFIER: (main)
+TokenType.OPEN_PARENTHESIS
+TokenType.CLOSE_PARENTHESIS
+TokenType.OPEN_BRACE
+TokenType.VAR
+TokenType.IDENTIFIER: (base)
+TokenType.ASSIGN
+TokenType.NUMBER_VALUE: (2)
+TokenType.SEMICOLON
+TokenType.MESSAGE
+TokenType.OPEN_PARENTHESIS
+TokenType.STRING_VALUE: (Write the first power)
+TokenType.CLOSE_PARENTHESIS
+TokenType.SEMICOLON
+TokenType.INPUT
+TokenType.OPEN_PARENTHESIS
+TokenType.IDENTIFIER: (power1)
+TokenType.CLOSE_PARENTHESIS
+TokenType.SEMICOLON
+TokenType.MESSAGE
+TokenType.OPEN_PARENTHESIS
+TokenType.STRING_VALUE: (Write the second power)
+TokenType.CLOSE_PARENTHESIS
+TokenType.SEMICOLON
+TokenType.INPUT
+TokenType.OPEN_PARENTHESIS
+TokenType.IDENTIFIER: (power2)
+TokenType.CLOSE_PARENTHESIS
+TokenType.SEMICOLON
+TokenType.IF
+TokenType.OPEN_PARENTHESIS
+TokenType.IDENTIFIER: (powerOfPower)
+TokenType.OPEN_PARENTHESIS
+TokenType.IDENTIFIER: (base)
+TokenType.COMMA
+TokenType.IDENTIFIER: (power1)
+TokenType.COMMA
+TokenType.IDENTIFIER: (power2)
+TokenType.CLOSE_PARENTHESIS
+TokenType.LESS
+TokenType.NUMBER_VALUE: (100)
+TokenType.CLOSE_PARENTHESIS
+TokenType.OPEN_BRACE
+TokenType.OUTPUT
+TokenType.OPEN_PARENTHESIS
+TokenType.STRING_VALUE: (You should do that without my help)
+TokenType.CLOSE_PARENTHESIS
+TokenType.SEMICOLON
+TokenType.CLOSE_BRACE
+TokenType.ELSE
+TokenType.OPEN_BRACE
+TokenType.OUTPUT
+TokenType.OPEN_PARENTHESIS
+TokenType.IDENTIFIER: (powerOfPower)
+TokenType.OPEN_PARENTHESIS
+TokenType.IDENTIFIER: (base)
+TokenType.COMMA
+TokenType.IDENTIFIER: (power1)
+TokenType.COMMA
+TokenType.IDENTIFIER: (power2)
+TokenType.CLOSE_PARENTHESIS
+TokenType.CLOSE_PARENTHESIS
+TokenType.SEMICOLON
+TokenType.CLOSE_BRACE
+TokenType.CLOSE_BRACE
+TokenType.STOP
+TokenType.EOF

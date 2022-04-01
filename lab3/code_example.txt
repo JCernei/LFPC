@@ -1,0 +1,25 @@
+PROCEED
+function powerOfPower(var base, var power1, var power2)
+{   
+    return pow(pow(base, power1), power2);
+}
+
+function main() 
+{
+    var base = 2;
+        
+    message("Write the first power");
+    input(power1);
+    message("Write the second power");
+    input(power2);
+    
+    if(powerOfPower(base, power1, power2) < 100)
+    {
+    output("You should do that without my help");
+    }
+    else
+    {
+    output(powerOfPower(base, power1, power2));
+    }
+}
+STOP
