@@ -1,0 +1,15 @@
+Terminals:
+a d
+NonTerminals:
+S A B C
+Productions:
+S -> d B;
+S -> A;
+A -> d;
+A -> d S;
+A -> a A d A B;
+B -> a;
+B -> a S;
+B -> A;
+B -> empty;
+C -> A a

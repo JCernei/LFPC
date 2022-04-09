@@ -1,0 +1,52 @@
+S -> d B | A
+A -> d | d S | a A d A B
+B -> a | a S | A | empty
+C -> A a
+
+Delete empty 
+S -> d B | d | A
+A -> a A d A B | a A d A | d | d S
+B -> a | a S | A
+C -> A a
+
+Remove nongenerating 
+S -> d B | d | A
+A -> a A d A B | a A d A | d | d S
+B -> a | a S | A
+C -> A a
+
+Remove unreachable 
+S -> d B | d | A
+A -> a A d A B | a A d A | d | d S
+B -> a | a S | A
+
+Eliminate rules with nonsolitary terminals 
+Z -> d
+S -> Z B | d | A
+Y -> a
+A -> Y A Z A B | Y A Z A | d | Z S
+B -> a | Y S | A
+
+Eliminate right-hand sides with more than 2 nonterminals 
+Z -> d
+S -> Z B | d | A
+Y -> a
+A -> Y A1 | Y B1 | d | Z S
+A1 -> A A2
+A2 -> Z A3
+A3 -> A B
+B1 -> A B2
+B2 -> Z A
+B -> a | Y S | A
+
+Eliminate unit rules 
+Z -> d
+S -> Z B | d | Y A1 | Y B1 | d | Z S
+Y -> a
+A -> Y A1 | Y B1 | d | Z S
+A1 -> A A2
+A2 -> Z A3
+A3 -> A B
+B1 -> A B2
+B2 -> Z A
+B -> a | Y S | Y A1 | Y B1 | d | Z S
