@@ -9,51 +9,46 @@ def parseGrammar(rules):
         k[0] = k[0].strip()
         k[1] = k[1].strip()
         rhs = k[1]
-        multirhs = rhs.split('|')
+        multipleRhs = rhs.split('|')
         # remove un-necessary spaces
-        for i in range(len(multirhs)):
-            multirhs[i] = multirhs[i].strip()
-            multirhs[i] = multirhs[i].split()
-        diction[k[0]] = multirhs
+        for i in range(len(multipleRhs)):
+            multipleRhs[i] = multipleRhs[i].strip()
+            multipleRhs[i] = multipleRhs[i].split()
+        diction[k[0]] = multipleRhs
 
 
 def removeLeftRecursion(rulesDiction):
     store = {}
-    # traverse over rules
     for lhs in rulesDiction:
-        # alphaRules stores subrules with left-recursion
-        # betaRules stores subrules without left-recursion
-        alphaRules = []
-        betaRules = []
+        # recursiveRules stores subrules with left-recursion
+        # nonRecursiveRules stores subrules without left-recursion
+        recursiveRules = []
+        nonRecursiveRules = []
         # get rhs for current lhs
-        allrhs = rulesDiction[lhs]
-        for subrhs in allrhs:
-            if subrhs[0] == lhs:
-                alphaRules.append(subrhs[1:])
+        allRhs = rulesDiction[lhs]
+        for subRhs in allRhs:
+            if subRhs[0] == lhs:
+                recursiveRules.append(subRhs[1:])
             else:
-                betaRules.append(subrhs)
-        # alpha and beta containing subrules are separated
+                nonRecursiveRules.append(subRhs)
         # now form two new rules
-        if len(alphaRules) != 0:
-            # to generate new unique symbol
-            # add ' till unique not generated
-            lhs_ = lhs + "'"
-            while (lhs_ in rulesDiction.keys()) \
-                    or (lhs_ in store.keys()):
-                lhs_ += "'"
-            # make beta rule
-            for b in range(0, len(betaRules)):
-                betaRules[b].append(lhs_)
-            rulesDiction[lhs] = betaRules
-            # make alpha rule
-            for a in range(0, len(alphaRules)):
-                alphaRules[a].append(lhs_)
-            alphaRules.append(['empty'])
-            # store in temp dict, append to
-            # - rulesDiction at end of traversal
-            store[lhs_] = alphaRules
-    # add newly generated rules generated
-    # - after removing left recursion
+        if len(recursiveRules) != 0:
+            # to generate new unique symbol add ' till unique not generated
+            newLhs = lhs + "'"
+            while (newLhs in rulesDiction.keys()) \
+                    or (newLhs in store.keys()):
+                newLhs += "'"
+            # make nonRecursive rule
+            for b in range(0, len(nonRecursiveRules)):
+                nonRecursiveRules[b].append(newLhs)
+            rulesDiction[lhs] = nonRecursiveRules
+            # make recursive rule
+            for a in range(0, len(recursiveRules)):
+                recursiveRules[a].append(newLhs)
+            recursiveRules.append(['empty'])
+            # store in temp dict, append to rulesDiction at end of traversal
+            store[newLhs] = recursiveRules
+    # add newly generated rules generated after removing left recursion
     for left in store:
         rulesDiction[left] = store[left]
     return rulesDiction
@@ -61,221 +56,172 @@ def removeLeftRecursion(rulesDiction):
 
 def leftFactoring(rulesDiction):
     newDict = {}
-    # iterate over all rules of dictionary
     for lhs in rulesDiction:
-        # get rhs for given lhs
-        allrhs = rulesDiction[lhs]
-        # temp dictionary helps detect left factoring
-        temp = dict()
-        for subrhs in allrhs:
-            if subrhs[0] not in list(temp.keys()):
-                temp[subrhs[0]] = [subrhs]
+        allRhs = rulesDiction[lhs]
+        temp = {}
+        for subRhs in allRhs:
+            if subRhs[0] not in list(temp.keys()):
+                temp[subRhs[0]] = [subRhs]
             else:
-                temp[subrhs[0]].append(subrhs)
-        # if value list count for any key in temp is > 1,
-        # - it has left factoring
-        # new_rule stores new subrules for current LHS symbol
-        new_rule = []
+                temp[subRhs[0]].append(subRhs)
+        # if value list count for any key in temp is > 1, it has left factoring
+        # newRule stores new subrules for current LHS symbol
+        newRule = []
         # temp_dict stores new subrules for left factoring
-        tempo_dict = {}
-        for term_key in temp:
-            # get value from temp for term_key
-            allStartingWithTermKey = temp[term_key]
-            if len(allStartingWithTermKey) > 1:
-                # left factoring required
-                # to generate new unique symbol
-                # - add ' till unique not generated
-                lhs_ = lhs + "'"
-                while (lhs_ in rulesDiction.keys()) \
-                        or (lhs_ in tempo_dict.keys()):
-                    lhs_ += "'"
+        tempoDict = {}
+        for termKey in temp:
+            if len(temp[termKey]) > 1:
+                newLhs = lhs + "'"
+                while (newLhs in rulesDiction.keys()) \
+                        or (newLhs in tempoDict.keys()):
+                    newLhs += "'"
                 # append the left factored result
-                new_rule.append([term_key, lhs_])
-                # add expanded rules to tempo_dict
-                ex_rules = []
-                for g in temp[term_key]:
-                    ex_rules.append(g[1:])
-                tempo_dict[lhs_] = ex_rules
+                newRule.append([termKey, newLhs])
+                # add expanded rules to tempoDict
+                expandedRules = []
+                for lfProduction in temp[termKey]:
+                    expandedRules.append(lfProduction[1:])
+                tempoDict[newLhs] = expandedRules
             else:
                 # no left factoring required
-                new_rule.append(allStartingWithTermKey[0])
+                newRule.append(temp[termKey][0])
         # add original rule
-        newDict[lhs] = new_rule
+        newDict[lhs] = newRule
         # add newly generated rules after left factoring
-        for key in tempo_dict:
-            newDict[key] = tempo_dict[key]
+        for key in tempoDict:
+            newDict[key] = tempoDict[key]
     return newDict
 
 
 def first(rule):
-    # recursion base condition
-    # (for terminal or epsilon)
-    if len(rule) != 0 and (rule is not None):
-        if rule[0] in term_userdef:
-            return rule[0]
-        elif rule[0] == 'empty':
-            return 'empty'
+    # condition for terminal or epsilon
+    if rule[0] in term_userdef:
+        return rule[0]
+    elif rule[0] == 'empty':
+        return 'empty'
 
     # condition for Non-Terminals
-    if len(rule) != 0:
-        if rule[0] in list(diction.keys()):
-            # fres temporary list of result
-            fres = []
-            rhs_rules = diction[rule[0]]
-            # call first on each rule of RHS
-            # fetched (& take union)
-            for itr in rhs_rules:
-                indivRes = first(itr)
-                if type(indivRes) is list:
-                    for i in indivRes:
-                        fres.append(i)
-                else:
-                    fres.append(indivRes)
-
-            # if no epsilon in result
-            # - received return fres
-            if 'empty' not in fres:
-                return fres
+    if rule[0] not in diction:
+        return
+    # firstRes temporary list of result
+    firstRes = []
+    rhsRules = diction[rule[0]]
+    # call first on each rule of RHS fetched (& take union)
+    for rhsRule in rhsRules:
+        indivRes = first(rhsRule)
+        if type(indivRes) is list:
+            for i in indivRes:
+                firstRes.append(i)
+        else:
+            firstRes.append(indivRes)
+    # if no epsilon in result return firstRes
+    if 'empty' not in firstRes:
+        return firstRes
+    # apply epsilon rule: first(ABC)=first(A)-{e} U first(BC)
+    newList = []
+    firstRes.remove('empty')
+    if len(rule) > 1:
+        ansNew = first(rule[1:])
+        if ansNew != None:
+            if type(ansNew) is list:
+                newList = firstRes + ansNew
             else:
-                # apply epsilon
-                # rule => f(ABC)=f(A)-{e} U f(BC)
-                newList = []
-                fres.remove('empty')
-                if len(rule) > 1:
-                    ansNew = first(rule[1:])
-                    if ansNew != None:
-                        if type(ansNew) is list:
-                            newList = fres + ansNew
-                        else:
-                            newList = fres + [ansNew]
-                    else:
-                        newList = fres
-                    return newList
-                # if result is not already returned
-                # - control reaches here
-                # lastly if eplison still persists
-                # - keep it in result of first
-                fres.append('empty')
-                return fres
+                newList = firstRes + [ansNew]
+        else:
+            newList = firstRes
+        return newList
+    firstRes.append('empty')
+    return firstRes
 
 
 def follow(nonTerminal):
-    # for start symbol return $ (recursion base case)
-    solset = set()
+    # for start symbol return $
+    followSet = set()
     if nonTerminal == start_symbol:
-        # return '$'
-        solset.add('$')
+        followSet.add('$')
 
-    # check all occurrences
-    # solset - is result of computed 'follow' so far
-
-    # For input, check in all rules
-    for curNT in diction:
-        rhs = diction[curNT]
-        # go for all productions of NT
+    for currNT in diction:
+        rhs = diction[currNT]
         for subrule in rhs:
-            if nonTerminal in subrule:
-                # call for all occurrences on
-                # - non-terminal in subrule
-                while nonTerminal in subrule:
-                    index_nt = subrule.index(nonTerminal)
-                    subrule = subrule[index_nt + 1:]
-                    # empty condition - call follow on LHS
-                    if len(subrule) != 0:
-                        # compute first if symbols on
-                        # - RHS of target Non-Terminal exists
-                        res = first(subrule)
-                        # if epsilon in result apply rule
-                        # - (A->aBX)- follow of -
-                        # - follow(B)=(first(X)-{ep}) U follow(A)
-                        if 'empty' in res:
-                            newList = []
-                            res.remove('empty')
-                            ansNew = follow(curNT)
-                            if ansNew != None:
-                                if type(ansNew) is list:
-                                    newList = res + ansNew
-                                else:
-                                    newList = res + [ansNew]
+            # call for all occurrences on non terminal in subrule
+            while nonTerminal in subrule:
+                index_nt = subrule.index(nonTerminal)
+                subrule = subrule[index_nt + 1:]
+                if len(subrule) != 0:
+                    # compute first() if symbols of RHS of target non terminal exists
+                    res = first(subrule)
+                    # if epsilon in result apply rule (A->aBX): follow(B)=(first(X)-{ep}) U follow(A)
+                    if 'empty' in res:
+                        newList = []
+                        res.remove('empty')
+                        ansNew = follow(currNT)
+                        if ansNew != None:
+                            if type(ansNew) is list:
+                                newList = res + ansNew
                             else:
-                                newList = res
-                            res = newList
-                    else:
-                        # when nothing in RHS, go circular
-                        # - and take follow of LHS
-                        # only if (NT in LHS)!=curNT
-                        if nonTerminal != curNT:
-                            res = follow(curNT)
-
-                    # add follow result in set form
-                    if res is not None:
-                        if type(res) is list:
-                            for g in res:
-                                solset.add(g)
+                                newList = res + [ansNew]
                         else:
-                            solset.add(res)
-    return list(solset)
+                            newList = res
+                        res = newList
+                else:
+                    # use the rule  A -> aB, FOLLOW(B) = FOLLOW(A)
+                    if nonTerminal != currNT:
+                        res = follow(currNT)
+
+                # add follow result in set form
+                if res is not None:
+                    if type(res) is list:
+                        for g in res:
+                            followSet.add(g)
+                    else:
+                        followSet.add(res)
+    return list(followSet)
 
 
 def computeAllFirsts():
-    for y in list(diction.keys()):
-        t = set()
-        for sub in diction.get(y):
-            res = first(sub)
+    for NT in diction:
+        firstSet = set()
+        for rhs in diction[NT]:
+            res = first(rhs)
             if res != None:
                 if type(res) is list:
-                    for u in res:
-                        t.add(u)
+                    for firstTerm in res:
+                        firstSet.add(firstTerm)
                 else:
-                    t.add(res)
-        # save result in 'firsts' list
-        firsts[y] = t
+                    firstSet.add(res)
+        firsts[NT] = firstSet
 
 
 def computeAllFollows():
     for NT in diction:
-        solset = set()
-        sol = follow(NT)
-        if sol is not None:
-            for g in sol:
-                solset.add(g)
-        follows[NT] = solset
+        followSet = set()
+        if follow(NT) is not None:
+            for followTerm in follow(NT):
+                followSet.add(followTerm)
+        follows[NT] = followSet
 
 
 def createParseTable():
-    print("\nFirst and Follow table\n")
-    ffTable = PrettyTable()
-    ffTable.field_names = ["", "FIRST", "FOLLOW"]
-    for u in diction:
-        ffTable.add_row([u, str(firsts[u]), str(follows[u])])
-    ffTable.align = "l"
-    print(ffTable)
-
     # create matrix of row(NT) x [col(T) + 1($)]
     # create list of non-terminals
-    ntlist = list(diction.keys())
+    nonTerminalList = list(diction.keys())
     terminals = copy.deepcopy(term_userdef)
     terminals.append('$')
 
-    # create the initial empty state of ,matrix
+    # create the initial empty state of matrix
     mat = []
-    for x in diction:
+    for nonTerminal in diction:
         row = []
-        for y in terminals:
+        for terminal in terminals:
             row.append('')
-        # of $ append one more col
         mat.append(row)
-
-    # Classifying grammar as LL(1) or not LL(1)
-    grammar_is_LL = True
 
     # rules implementation
     for lhs in diction:
         rhs = diction[lhs]
         for y in rhs:
             res = first(y)
-            # epsilon is present,
-            # - take union with follow
+            # epsilon is present, take union with follow
             if 'empty' in res:
                 if type(res) == str:
                     firstFollow = []
@@ -288,56 +234,24 @@ def createParseTable():
                     res = firstFollow
                 else:
                     res.remove('empty')
-                    res = list(res) +\
-                        list(follows[lhs])
+                    res = list(res) + list(follows[lhs])
             # add rules to table
             ttemp = []
             if type(res) is str:
                 ttemp.append(res)
                 res = copy.deepcopy(ttemp)
             for c in res:
-                xnt = ntlist.index(lhs)
+                xnt = nonTerminalList.index(lhs)
                 yt = terminals.index(c)
                 if mat[xnt][yt] == '':
-                    mat[xnt][yt] = mat[xnt][yt] \
-                        + f"{lhs}->{' '.join(y)}"
-                else:
-                    # if rule already present
-                    if f"{lhs}->{y}" in mat[xnt][yt]:
-                        continue
-                    else:
-                        grammar_is_LL = False
-                        mat[xnt][yt] = mat[xnt][yt] \
-                            + f",{lhs}->{' '.join(y)}"
+                    mat[xnt][yt] = mat[xnt][yt] + f"{lhs}->{' '.join(y)}"
 
-    # print parsing table
-    space = ['']
-    print("\nGenerated parsing table:\n")
-    parsingTable = PrettyTable()
-    parsingTable.field_names = space + terminals
-    j = 0
-    for y in mat:
-        rowComponents = [ntlist[j]] + y
-        parsingTable.add_row(rowComponents)
-        j += 1
-    parsingTable.align = "l"
-    print(parsingTable)
-    return (mat, grammar_is_LL, terminals)
+    return mat, terminals
 
 
-def validateStringUsingStackBuffer(parsing_table, grammarll1,
-                                   table_term_list, input_string,
-                                   term_userdef, start_symbol):
-
-    print(f"\nValidate String: {input_string}\n")
-
-    # for more than one entries
-    # - in one cell of parsing table
-    if grammarll1 == False:
-        return f"\nInput String = " \
-            f"\"{input_string}\"\n" \
-            f"Grammar is not LL(1)"
-
+def validateString(parsingTable,
+                   table_term_list, input_string,
+                   term_userdef, start_symbol):
     # implementing stack input
     stack = [start_symbol, '$']
 
@@ -355,22 +269,24 @@ def validateStringUsingStackBuffer(parsing_table, grammarll1,
         if stack == ['$'] and input == ['$']:
             action = "Valid"
             validationTable.add_row([stack, input, action])
-            return print(validationTable), "\nValid String!"
+            print(validationTable)
+            return "\nValid String!"
         elif stack[0] not in term_userdef:
             # take font of input (y) and tos (x)
             x = list(diction.keys()).index(stack[0])
             y = table_term_list.index(input[-1])
-            if parsing_table[x][y] != '':
+            if parsingTable[x][y] != '':
                 # format table entry received
-                entry = parsing_table[x][y]
-                action = f"T[{stack[0]}][{input[-1]}] = {entry}"
+                entry = parsingTable[x][y]
+                action = f"{entry}"
                 validationTable.add_row([stack, input, action])
                 lhs_rhs = entry.split("->")
                 lhs_rhs[1] = lhs_rhs[1].replace('empty', '').strip()
-                entryrhs = lhs_rhs[1].split()
-                stack = entryrhs + stack[1:]
+                entryRhs = lhs_rhs[1].split()
+                stack = entryRhs + stack[1:]
             else:
-                return print(validationTable), f"\nInvalid String! No rule at " \
+                print(validationTable)
+                return f"\nInvalid String! No rule at " \
                     f"Table[{stack[0]}][{input[-1]}]."
         else:
             # stack top is Terminal
@@ -380,13 +296,12 @@ def validateStringUsingStackBuffer(parsing_table, grammarll1,
                 input = input[:-1]
                 stack = stack[1:]
             else:
-                return print(validationTable), "\nInvalid String! " \
+                print(validationTable)
+                return "\nInvalid String! " \
                     "Unmatched terminal symbols"
 
 
 # DRIVER CODE - MAIN
-sample_input_string = None
-
 rules = ["S -> L d X",
          "X -> D",
          "L -> c a | a L",
@@ -402,39 +317,51 @@ follows = {}
 
 parseGrammar(rules)
 
+start_symbol = list(diction.keys())[0]
+
 print(f"\nRules: \n")
-for y in diction:
-    print(f"{y}->{diction[y]}")
+for nonTerminal in diction:
+    print(f"{nonTerminal}->{diction[nonTerminal]}")
 
 print(f"\nAfter elimination of left recursion:\n")
 diction = removeLeftRecursion(diction)
-for y in diction:
-    print(f"{y}->{diction[y]}")
+for nonTerminal in diction:
+    print(f"{nonTerminal}->{diction[nonTerminal]}")
 
 print("\nAfter left factoring:\n")
 diction = leftFactoring(diction)
-for y in diction:
-    print(f"{y}->{diction[y]}")
+for nonTerminal in diction:
+    print(f"{nonTerminal}->{diction[nonTerminal]}")
 
-# computes all FIRSTs for all non terminals
 computeAllFirsts()
-
-# assuming first rule has start_symbol
-# start symbol can be modified in below line of code
-start_symbol = list(diction.keys())[0]
-
-# computes all FOLLOWs for all occurrences
 computeAllFollows()
 
-# generate formatted first and follow table
-# then generate parse table
-(parsing_table, result, tabTerm) = createParseTable()
+print("\nFirst and Follow table\n")
+ffTable = PrettyTable()
+ffTable.field_names = ["", "FIRST", "FOLLOW"]
+for u in diction:
+    ffTable.add_row([u, str(firsts[u]), str(follows[u])])
+ffTable.align = "l"
+print(ffTable)
 
-# validate string input using stack-buffer concept
-if sample_input_string != None:
-    validity = validateStringUsingStackBuffer(parsing_table, result,
-                                              tabTerm, sample_input_string,
-                                              term_userdef, start_symbol)
-    print(validity)
-else:
-    print("\nNo input String detected")
+parsingTableInfo, tableTermminals = createParseTable()
+
+print("\nGenerated parsing table:\n")
+space = ['']
+nonTerminalList = list(diction.keys())
+parsingTable = PrettyTable()
+parsingTable.field_names = space + tableTermminals
+j = 0
+for y in parsingTableInfo:
+    rowComponents = [nonTerminalList[j]] + y
+    parsingTable.add_row(rowComponents)
+    j += 1
+parsingTable.align = "l"
+print(parsingTable)
+
+# validate string input using stack-input-action concept
+print(f"\nValidate String: {sample_input_string}\n")
+validity = validateString(parsingTableInfo, tableTermminals,
+                          sample_input_string, term_userdef,
+                          start_symbol)
+print(validity)
