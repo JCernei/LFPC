@@ -67,7 +67,7 @@ def leftFactoring(rulesDiction):
         # if value list count for any key in temp is > 1, it has left factoring
         # newRule stores new subrules for current LHS symbol
         newRule = []
-        # temp_dict stores new subrules for left factoring
+        # tempDict stores new subrules for left factoring
         tempoDict = {}
         for termKey in temp:
             if len(temp[termKey]) > 1:
@@ -94,8 +94,8 @@ def leftFactoring(rulesDiction):
 
 
 def first(rule):
-    # condition for terminal or epsilon
-    if rule[0] in term_userdef:
+    # condition for terminal or empty
+    if rule[0] in terminalsList:
         return rule[0]
     elif rule[0] == 'empty':
         return 'empty'
@@ -106,7 +106,7 @@ def first(rule):
     # firstRes temporary list of result
     firstRes = []
     rhsRules = diction[rule[0]]
-    # call first on each rule of RHS fetched (& take union)
+    # call first on each rule of RHS fetched and take union
     for rhsRule in rhsRules:
         indivRes = first(rhsRule)
         if type(indivRes) is list:
@@ -114,10 +114,10 @@ def first(rule):
                 firstRes.append(i)
         else:
             firstRes.append(indivRes)
-    # if no epsilon in result return firstRes
+    # if no empty in result return firstRes
     if 'empty' not in firstRes:
         return firstRes
-    # apply epsilon rule: first(ABC)=first(A)-{e} U first(BC)
+    # apply empty rule: first(ABC)=first(A)-{e} U first(BC)
     newList = []
     firstRes.remove('empty')
     if len(rule) > 1:
@@ -135,9 +135,9 @@ def first(rule):
 
 
 def follow(nonTerminal):
-    # for start symbol return $
+    # for start symbol add $
     followSet = set()
-    if nonTerminal == start_symbol:
+    if nonTerminal == startSymbol:
         followSet.add('$')
 
     for currNT in diction:
@@ -145,12 +145,12 @@ def follow(nonTerminal):
         for subrule in rhs:
             # call for all occurrences on non terminal in subrule
             while nonTerminal in subrule:
-                index_nt = subrule.index(nonTerminal)
-                subrule = subrule[index_nt + 1:]
+                indexNonTerminal = subrule.index(nonTerminal)
+                subrule = subrule[indexNonTerminal + 1:]
                 if len(subrule) != 0:
                     # compute first() if symbols of RHS of target non terminal exists
                     res = first(subrule)
-                    # if epsilon in result apply rule (A->aBX): follow(B)=(first(X)-{ep}) U follow(A)
+                    # if empty in result apply rule (A->aBX): follow(B)=(first(X)-{e}) U follow(A)
                     if 'empty' in res:
                         newList = []
                         res.remove('empty')
@@ -179,9 +179,9 @@ def follow(nonTerminal):
 
 
 def computeAllFirsts():
-    for NT in diction:
+    for nonTerminal in diction:
         firstSet = set()
-        for rhs in diction[NT]:
+        for rhs in diction[nonTerminal]:
             res = first(rhs)
             if res != None:
                 if type(res) is list:
@@ -189,23 +189,23 @@ def computeAllFirsts():
                         firstSet.add(firstTerm)
                 else:
                     firstSet.add(res)
-        firsts[NT] = firstSet
+        firsts[nonTerminal] = firstSet
 
 
 def computeAllFollows():
-    for NT in diction:
+    for nonTerminal in diction:
         followSet = set()
-        if follow(NT) is not None:
-            for followTerm in follow(NT):
+        if follow(nonTerminal) is not None:
+            for followTerm in follow(nonTerminal):
                 followSet.add(followTerm)
-        follows[NT] = followSet
+        follows[nonTerminal] = followSet
 
 
-def createParseTable():
-    # create matrix of row(NT) x [col(T) + 1($)]
+def createPredictiveMatrix():
+    # create matrix of row(nonTerminal) x [col(terminal) + 1($)]
     # create list of non-terminals
     nonTerminalList = list(diction.keys())
-    terminals = copy.deepcopy(term_userdef)
+    terminals = copy.deepcopy(terminalsList)
     terminals.append('$')
 
     # create the initial empty state of matrix
@@ -221,7 +221,7 @@ def createParseTable():
         rhs = diction[lhs]
         for y in rhs:
             res = first(y)
-            # epsilon is present, take union with follow
+            # empty is present, take union with follow
             if 'empty' in res:
                 if type(res) == str:
                     firstFollow = []
@@ -246,19 +246,17 @@ def createParseTable():
                 if mat[xnt][yt] == '':
                     mat[xnt][yt] = mat[xnt][yt] + f"{lhs}->{' '.join(y)}"
 
-    return mat, terminals
+    return mat
 
 
-def validateString(parsingTable,
-                   table_term_list, input_string,
-                   term_userdef, start_symbol):
-    # implementing stack input
-    stack = [start_symbol, '$']
+def validateString(predictiveMatrix,
+                   tableTermList, inputString,
+                   terminalsList, startSymbol):
 
-    # reverse input string store in input
-    input_string = input_string.split()
-    input_string.reverse()
-    input = ['$'] + input_string
+    stack = [startSymbol, '$']
+
+    inputString = inputString.split()
+    input = inputString + ['$']
 
     validationTable = PrettyTable()
     validationTable.field_names = ["Stack", "Input", "Action"]
@@ -271,14 +269,14 @@ def validateString(parsingTable,
             validationTable.add_row([stack, input, action])
             print(validationTable)
             return "\nValid String!"
-        elif stack[0] not in term_userdef:
+        elif stack[0] not in terminalsList:
             # take font of input (y) and tos (x)
             x = list(diction.keys()).index(stack[0])
-            y = table_term_list.index(input[-1])
-            if parsingTable[x][y] != '':
-                # format table entry received
-                entry = parsingTable[x][y]
-                action = f"{entry}"
+            y = tableTermList.index(input[0])
+            if predictiveMatrix[x][y] != '':
+                # format from predictiv matrix
+                entry = predictiveMatrix[x][y]
+                action = entry
                 validationTable.add_row([stack, input, action])
                 lhs_rhs = entry.split("->")
                 lhs_rhs[1] = lhs_rhs[1].replace('empty', '').strip()
@@ -287,13 +285,13 @@ def validateString(parsingTable,
             else:
                 print(validationTable)
                 return f"\nInvalid String! No rule at " \
-                    f"Table[{stack[0]}][{input[-1]}]."
+                    f"predictiveMatrix[{stack[0]}][{input[0]}]."
         else:
             # stack top is Terminal
-            if stack[0] == input[-1]:
-                action = f"Matched:{stack[0]}"
+            if stack[0] == input[0]:
+                action = "terminal"
                 validationTable.add_row([stack, input, action])
-                input = input[:-1]
+                input = input[1:]
                 stack = stack[1:]
             else:
                 print(validationTable)
@@ -301,15 +299,15 @@ def validateString(parsingTable,
                     "Unmatched terminal symbols"
 
 
-# DRIVER CODE - MAIN
+# Main
 rules = ["S -> L d X",
          "X -> D",
          "L -> c a | a L",
          "D -> b | D e b"]
 
-nonterm_userdef = ['S', 'L', 'X', 'D']
-term_userdef = ['a', 'b', 'c', 'd', 'e']
-sample_input_string = "a a a a c a d e e b b b"
+nonTerminalsList = ['S', 'L', 'X', 'D']
+terminalsList = ['a', 'b', 'c', 'd', 'e']
+inputString = "a a a a c a d e e b b b"
 
 diction = {}
 firsts = {}
@@ -317,7 +315,7 @@ follows = {}
 
 parseGrammar(rules)
 
-start_symbol = list(diction.keys())[0]
+startSymbol = list(diction.keys())[0]
 
 print(f"\nRules: \n")
 for nonTerminal in diction:
@@ -344,24 +342,25 @@ for u in diction:
 ffTable.align = "l"
 print(ffTable)
 
-parsingTableInfo, tableTermminals = createParseTable()
+predictiveMatrixInfo = createPredictiveMatrix()
+matrixTermminals = copy.deepcopy(terminalsList)
+matrixTermminals.append('$')
 
-print("\nGenerated parsing table:\n")
-space = ['']
+print("\nGenerated predictive matrix:\n")
 nonTerminalList = list(diction.keys())
-parsingTable = PrettyTable()
-parsingTable.field_names = space + tableTermminals
+predictiveMatrix = PrettyTable()
+predictiveMatrix.field_names = [''] + matrixTermminals
 j = 0
-for y in parsingTableInfo:
+for y in predictiveMatrixInfo:
     rowComponents = [nonTerminalList[j]] + y
-    parsingTable.add_row(rowComponents)
+    predictiveMatrix.add_row(rowComponents)
     j += 1
-parsingTable.align = "l"
-print(parsingTable)
+predictiveMatrix.align = "l"
+print(predictiveMatrix)
 
 # validate string input using stack-input-action concept
-print(f"\nValidate String: {sample_input_string}\n")
-validity = validateString(parsingTableInfo, tableTermminals,
-                          sample_input_string, term_userdef,
-                          start_symbol)
+print(f"\nValidate String: {inputString}\n")
+validity = validateString(predictiveMatrixInfo, matrixTermminals,
+                          inputString, terminalsList,
+                          startSymbol)
 print(validity)
